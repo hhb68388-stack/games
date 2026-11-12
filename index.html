@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ركن الألعاب</title>
+<style>
+:root{--bg:#12101c;--panel:#1c1930;--line:#2f2a4a;--text:#f2efff;--mute:#9a94bd;--a:#ffc24b;--b:#3fd9b5;--c:#ff6f91;--d:#7aa2ff;--ok:#3ddc84;--bad:#ff4d5e}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,Arial,sans-serif;min-height:100vh;padding:14px}
+.wrap{max-width:720px;margin:auto}
+h1{font-size:1.5rem;text-align:center;margin:6px 0 14px}
+nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+nav button{background:var(--panel);color:var(--mute);border:1px solid var(--line);border-radius:12px;padding:12px 4px;font:inherit;font-size:.9rem;cursor:pointer;transition:.2s}
+nav button.on{color:#111;background:var(--a);border-color:var(--a);font-weight:700;transform:translateY(-2px)}
+.panel{display:none;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
+.panel.on{display:block}
+h2{font-size:1.2rem;margin-bottom:8px}
+p.sub{color:var(--mute);line-height:1.8;margin-bottom:12px;font-size:.95rem}
+.btn{background:var(--a);color:#111;border:0;border-radius:12px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer;transition:.15s}
+.btn:active{transform:scale(.96)}
+.btn.g{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px;align-items:center}
+select,input[type=text]{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+.center{text-align:center}
+.big{font-size:2.2rem;font-weight:800}
+/* spy */
+.rev{background:var(--bg);border:2px dashed var(--line);border-radius:16px;padding:34px 10px;margin:14px 0;cursor:pointer;min-height:130px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+.rev.shown{border-style:solid;border-color:var(--b)}
+.rev.spy.shown{border-color:var(--c)}
+.stepper{display:flex;align-items:center;gap:12px;justify-content:center}
+.stepper button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:1.3rem;cursor:pointer}
+/* connections */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.card{background:#2a2646;border:2px solid transparent;border-radius:12px;padding:16px 2px;text-align:center;font-weight:700;cursor:pointer;user-select:none;transition:.18s;font-size:clamp(.85rem,3.4vw,1.1rem)}
+.card:hover{background:#352f58}
+.card.sel{background:var(--d);color:#101020;transform:scale(1.05)}
+.card.shake{animation:sh .45s}
+@keyframes sh{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.done{border-radius:12px;padding:12px;text-align:center;color:#111;margin-bottom:8px;animation:pop .4s}
+.done b{display:block}.done span{font-size:.9rem}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.lives{display:flex;gap:6px;justify-content:center;align-items:center;color:var(--mute)}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--c);transition:.3s}.dot.off{background:var(--line);transform:scale(.6)}
+.msg{min-height:24px;text-align:center;color:var(--a);margin:6px 0}
+/* typing */
+#tyP{background:radial-gradient(circle at 50% 0,#241a4a,var(--panel) 60%)}
+.hud{display:flex;justify-content:space-between;font-size:1.1rem;font-weight:700}
+.neon-t{color:var(--b);text-shadow:0 0 12px var(--b)}.neon-s{color:var(--c);text-shadow:0 0 12px var(--c)}
+.bar{height:8px;background:var(--bg);border-radius:6px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--b),var(--d));width:100%;transition:width .25s linear}
+.word{font-size:clamp(2rem,10vw,3.4rem);font-weight:800;text-align:center;margin:20px 0 6px;letter-spacing:.08em;text-shadow:0 0 18px var(--d)}
+.mode{text-align:center;color:var(--mute);margin-bottom:10px}
+#tyIn{width:100%;font-size:1.5rem;text-align:center;border:2px solid var(--line);border-radius:14px;padding:14px;transition:.2s}
+#tyIn.ok{border-color:var(--ok);box-shadow:0 0 16px var(--ok)}
+#tyIn.no{border-color:var(--bad);box-shadow:0 0 16px var(--bad);animation:sh .4s}
+.seg{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.seg button{background:var(--bg);color:var(--mute);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+.seg button.on{background:var(--b);color:#111;border-color:var(--b)}
+/* overlay */
+.ov{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:9;padding:20px}
+.ov.on{display:flex}
+.ov .box{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px;text-align:center;max-width:340px;width:100%;animation:pop .35s}
+.rb{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:.95rem}.rb .n{width:92px;text-align:right;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.rb .s{width:42px;font-weight:700}.rb .tr{flex:1;background:var(--bg);border-radius:6px;height:8px}.rb i{display:block;height:8px;border-radius:6px;background:linear-gradient(90deg,var(--b),var(--d));transition:width .3s}.rb.me .n{color:var(--a)}
+.chip{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:6px 12px;margin:3px;font-size:.95rem}
+.guide h3{margin:14px 0 4px;color:var(--a);font-size:1rem}
+.guide p{color:var(--mute);line-height:1.8;font-size:.92rem}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#12101c"><link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+<div class="wrap">
+<h1>🎮 ركن الألعاب</h1>
+<div class="center"><button class="btn g" id="inst" style="display:none;margin-bottom:12px">📲 ثبّت التطبيق</button></div>
+<nav>
+ <button class="on" data-t="0">مين برا السالفة</button>
+ <button data-t="1">الروابط</button>
+ <button data-t="2">أسرع كاتب</button>
+ <button data-t="3">الشرح</button>
+</nav>
+
+<!-- 1: مين برا السالفة -->
+<section class="panel on" id="p0">
+ <h2>🕵️ مين برا السالفة؟</h2>
+ <p class="sub">لعبة جماعية بجوال واحد. الكل يعرف الكلمة السرّية إلا واحد "برا السالفة". تتناقشون وتسألون بعض بدون ما تذكرون الكلمة، وتحاولون تكشفون مين ما يعرفها. وهو يحاول يتقمص ويخمّن الكلمة.</p>
+ <div class="seg" id="spyMode"><button class="on" data-s="loc">جوال واحد</button><button data-s="cod">بالكود (بدون حساب)</button><button data-s="onl">غرف أونلاين</button></div>
+ <div id="spyCod" style="display:none" class="center"></div>
+ <div id="spyOnl" style="display:none" class="center"></div>
+ <div id="spyLoc">
+ <div id="spySetup" class="center">
+  <div class="stepper"><button onclick="spyN(-1)">−</button><div><div class="big" id="nTxt">4</div><div class="sub" style="margin:0">عدد اللاعبين</div></div><button onclick="spyN(1)">+</button></div>
+  <div class="row"><select id="cat"></select></div>
+  <div class="row"><button class="btn" onclick="spyStart()">ابدأ اللعبة</button></div>
+ </div>
+ <div id="spyPlay" style="display:none" class="center">
+  <h2 id="spyWho"></h2>
+  <div class="rev" id="spyCard" onclick="spyShow()"><div style="font-size:2rem">👆</div><div>اضغط لتشوف دورك بسرية</div></div>
+  <button class="btn" id="spyNext" disabled onclick="spyNextP()">تم، مرّر الجوال</button>
+ </div>
+ <div id="spyTalk" style="display:none" class="center">
+  <h2>بدأ النقاش</h2>
+  <p class="sub">يبدأ اللاعب رقم <b id="starter"></b> بسؤال أي لاعب سؤالاً عن الكلمة. بعد ما تخلصون الأسئلة صوّتوا على مين برا السالفة.</p>
+  <div class="big neon-t" id="spyTimer">05:00</div>
+  <div class="row"><button class="btn" onclick="spyReveal()">اكشف برا السالفة</button></div>
+ </div>
+ <div id="spyEnd" style="display:none" class="center">
+  <h2>برا السالفة هو اللاعب <span id="spyIs" style="color:var(--c)"></span></h2>
+  <p class="sub">الكلمة كانت: <b id="spyWord" style="color:var(--b);font-size:1.3rem"></b><br>لو كشفتوه، يعطونه فرصة يخمّن الكلمة. إذا خمّنها يفوز.</p>
+  <div class="row"><button class="btn" onclick="spyAgain()">جولة جديدة</button></div>
+ </div>
+ </div>
+</section>
+
+<!-- 2: الروابط -->
+<section class="panel" id="p1">
+ <h2>🧩 الروابط</h2>
+ <p class="sub">اختر 4 كلمات بينها رابط مشترك. عندك 4 محاولات خاطئة فقط.</p>
+ <div class="lives">المحاولات: <span id="lives"></span></div>
+ <div id="solved" style="margin-top:12px"></div>
+ <div class="grid" id="grid"></div>
+ <div class="msg" id="cMsg"></div>
+ <div class="row">
+  <button class="btn g" onclick="cShuffle()">خلط</button>
+  <button class="btn g" onclick="cClear()">إلغاء التحديد</button>
+  <button class="btn" id="cGo" onclick="cSubmit()" disabled>تأكيد</button>
+ </div>
+</section>
+
+<!-- 3: أسرع كاتب -->
+<section class="panel" id="p2">
+ <div class="seg" id="tySw"><button class="on" data-s="loc">فردي</button><button data-s="cod">سباق بالكود (بدون حساب)</button><button data-s="onl">سباق غرف</button></div>
+ <div id="raceCod" style="display:none" class="center"></div>
+ <div id="raceOnl" style="display:none" class="center"></div>
+ <div id="tyMenu" class="center">
+  <h2>⚡ أسرع كاتب</h2>
+  <p class="sub">عندك 60 ثانية. كل إجابة صحيحة تعطيك نقاط وتزيد وقتك 3 ثواني.</p>
+  <div class="seg" id="modes">
+   <button data-m="type">كتابة سريعة</button>
+   <button data-m="scr">تفكيك الكلمة</button>
+   <button data-m="mix" class="on">مختلط</button>
+  </div>
+  <div class="row"><button class="btn" onclick="tyStart()">ابدأ</button></div>
+  <p class="sub" style="margin-top:12px">أفضل نتيجة: <b id="best">0</b></p>
+ </div>
+ <div id="tyGame" style="display:none">
+  <div class="hud"><span class="neon-t">⏱ <span id="tyT">60</span></span><span class="neon-s">النقاط: <span id="tyS">0</span></span></div>
+  <div class="bar"><i id="tyBar"></i></div>
+  <div class="mode" id="tyMode"></div>
+  <div class="word" id="tyWord"></div>
+  <input type="text" id="tyIn" autocomplete="off" placeholder="اكتب ثم Enter">
+  <div class="row"><button class="btn g" onclick="tyNext(true)">تخطّي (−2 ثانية)</button></div>
+ </div>
+</section>
+
+<!-- 4: الشرح -->
+<section class="panel guide" id="p3">
+ <h2>📖 دليل الألعاب</h2>
+ <h3>مين برا السالفة</h3>
+ <p>حدّد عدد اللاعبين والتصنيف. كل لاعب يشوف دوره بالسر ويمرّر الجوال. واحد فقط ما يعرف الكلمة. بعد النقاش صوّتوا عليه، ثم اكشفوا الإجابة.</p>
+ <h3>الروابط</h3>
+ <p>16 كلمة في 4 مجموعات. اختر 4 كلمات مرتبطة واضغط تأكيد. المجموعة الصحيحة تثبت بلونها، والخطأ يخصم محاولة. لو كنت قريب بكلمة وحدة تطلع لك رسالة تنبيه.</p>
+ <h3>أسرع كاتب</h3>
+ <p>اكتب الكلمة كما تظهر، أو رتّب الأحرف المبعثرة واكتب الكلمة الأصلية، ثم Enter. الكلمة الأطول تعطي نقاط أكثر، والسرعة تعطي مكافأة.</p>
+ <h3>نصيحة</h3>
+ <p>يمكنك تعديل الكلمات والتصنيفات بسهولة من أعلى كود الجافاسكربت في الملف.</p>
+</section>
+</div>
+
+<div class="ov" id="ov"><div class="box"><div class="big" id="ovI"></div><h2 id="ovT" style="margin:8px 0"></h2><p class="sub" id="ovM"></p><button class="btn" id="ovB">حسناً</button></div></div>
+
+<script>
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+let dip;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;document.getElementById('inst').style.display='inline-block'});
+document.getElementById('inst').onclick=async()=>{if(dip){dip.prompt();await dip.userChoice;dip=null;document.getElementById('inst').style.display='none'}};
+</script>
+<script>
+/* طبقة الاتصال: تخلي الغرف تشتغل عبر السيرفر بدون حساب */
+(function(){
+ let id;try{id=localStorage.getItem('uid');if(!id){id='u'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);localStorage.setItem('uid',id)}}catch(e){id='u'+Math.random().toString(36).slice(2,12)}
+ let ws,q=[],pend=new Map(),subs=new Map(),n=0;
+ const send=o=>{const m=JSON.stringify(o);ws&&ws.readyState===1?ws.send(m):q.push(m)};
+ function conn(){
+  ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);
+  ws.onopen=()=>{subs.forEach((s,sid)=>ws.send(JSON.stringify({op:'sub',sid,path:s.path,kind:s.kind})));q.splice(0).forEach(m=>ws.send(m))};
+  ws.onmessage=e=>{
+   const m=JSON.parse(e.data);
+   if(m.t==='res'){const p=pend.get(m.id);if(p){pend.delete(m.id);m.err?p.rej(new Error(m.err)):p.res(m)}return}
+   const s=subs.get(m.sid);if(!s)return;
+   if(m.t==='doc')s.next({id:s.path.split('/').pop(),exists:m.exists,data:()=>m.data});
+   else s.next({size:m.docs.length,empty:!m.docs.length,docs:m.docs.map(d=>({id:d.id,exists:true,data:()=>d.data}))});
+  };
+  ws.onclose=()=>setTimeout(conn,1500);
+ }
+ conn();
+ const req=o=>new Promise((res,rej)=>{const i='r'+(++n);pend.set(i,{res,rej});send({...o,id:i});setTimeout(()=>{if(pend.has(i)){pend.delete(i);rej(new Error('timeout'))}},8000)});
+ const sub=(path,kind,next)=>{const sid='s'+(++n);subs.set(sid,{path,kind,next});send({op:'sub',sid,path,kind});return()=>{subs.delete(sid);send({op:'unsub',sid})}};
+ const DBshim={
+  doc:p=>({
+   get:async()=>{const m=await req({op:'get',path:p});return{id:p.split('/').pop(),exists:m.exists,data:()=>m.data}},
+   set:d=>req({op:'set',path:p,data:d}).then(()=>{}),
+   update:d=>req({op:'update',path:p,data:d}).then(()=>{}),
+   delete:()=>req({op:'delete',path:p}).then(()=>{}),
+   onSnapshot:(next)=>sub(p,'doc',next)
+  }),
+  collection:p=>({onSnapshot:(next)=>sub(p,'col',next)})
+ };
+ window.claude={use:async name=>name==='db'?DBshim:name==='user'?{id:async()=>id}:null};
+})();
+</script>
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=a=>a[Math.random()*a.length|0];
+function popup(i,t,m,cb){$('#ovI').textContent=i;$('#ovT').textContent=t;$('#ovM').innerHTML=m;$('#ov').classList.add('on');$('#ovB').onclick=()=>{$('#ov').classList.remove('on');cb&&cb()}}
+
+/* ===== التبويبات ===== */
+$$('nav button').forEach(b=>b.onclick=()=>{
+ $$('nav button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+ $$('.panel').forEach(p=>p.classList.remove('on'));$('#p'+b.dataset.t).classList.add('on');
+ if(b.dataset.t!=='2')tyStop();
+});
+
+/* ===== 1) مين برا السالفة ===== */
+const CATS={
+ "أكلات":["كبسة","مندي","شاورما","برجر","بيتزا","سمبوسة","حمص","جريش","مطبق","كنافة"],
+ "أماكن":["مطار","مستشفى","مدرسة","سوق","شاطئ","مسجد","ملاهي","مكتبة","فندق","مطعم"],
+ "حيوانات":["جمل","صقر","أسد","حصان","دلفين","قطة","نمر","ثعلب","بطريق","زرافة"],
+ "مهن":["طبيب","معلم","طيار","مهندس","طباخ","شرطي","نجار","محامي","رسام","حلاق"],
+ "رياضة":["كورة","سباحة","تنس","فروسية","ملاكمة","جري","سلة","بلياردو","غوص","رماية"]
+};
+$('#cat').innerHTML='<option value="">تصنيف عشوائي</option>'+Object.keys(CATS).map(k=>`<option>${k}</option>`).join('');
+let sn=4,S={};
+function spyN(d){sn=Math.min(12,Math.max(3,sn+d));$('#nTxt').textContent=sn}
+function spyStart(){
+ const c=$('#cat').value||pick(Object.keys(CATS));
+ S={n:sn,spy:Math.random()*sn|0,word:pick(CATS[c]),cat:c,cur:0,shown:false};
+ $('#spySetup').style.display='none';$('#spyPlay').style.display='block';spyTurn();
+}
+function spyTurn(){
+ S.shown=false;$('#spyWho').textContent='دور اللاعب '+(S.cur+1);
+ const r=$('#spyCard');r.className='rev';r.innerHTML='<div style="font-size:2rem">👆</div><div>اضغط لتشوف دورك بسرية</div>';
+ $('#spyNext').disabled=true;$('#spyNext').textContent=S.cur===S.n-1?'ابدأ النقاش':'تم، مرّر الجوال';
+}
+function spyShow(){
+ if(S.shown)return;S.shown=true;const r=$('#spyCard'),spy=S.cur===S.spy;
+ r.className='rev shown'+(spy?' spy':'');
+ r.innerHTML=spy?`<div style="font-size:2rem">🤫</div><div class="big" style="color:var(--c)">أنت برا السالفة</div><div class="sub" style="margin:0">التصنيف: ${S.cat}</div>`
+  :`<div class="sub" style="margin:0">التصنيف: ${S.cat}</div><div class="big" style="color:var(--b)">${S.word}</div>`;
+ $('#spyNext').disabled=false;
+}
+function spyNextP(){
+ if(S.cur<S.n-1){S.cur++;spyTurn();return}
+ $('#spyPlay').style.display='none';$('#spyTalk').style.display='block';
+ $('#starter').textContent=(Math.random()*S.n|0)+1;spyTimer(300);
+}
+let spyI;
+function spyTimer(t){
+ clearInterval(spyI);const f=()=>{$('#spyTimer').textContent=String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t--<=0){clearInterval(spyI);spyReveal()}};f();spyI=setInterval(f,1000);
+}
+function spyReveal(){
+ clearInterval(spyI);$('#spyTalk').style.display='none';$('#spyEnd').style.display='block';
+ $('#spyIs').textContent=S.spy+1;$('#spyWord').textContent=S.word;
+}
+function spyAgain(){$('#spyEnd').style.display='none';$('#spySetup').style.display='block'}
+
+/* ===== مين برا السالفة أونلاين ===== */
+$$('#spyMode button').forEach(b=>b.onclick=()=>{
+ $$('#spyMode button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+ const m=b.dataset.s;$('#spyLoc').style.display=m==='loc'?'block':'none';$('#spyOnl').style.display=m==='onl'?'block':'none';$('#spyCod').style.display=m==='cod'?'block':'none';if(m==='onl'&&!O.code)onlInit();if(m==='cod')codHome();
+});
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let DB=null,UID=null,O={name:'',code:null,room:null,pl:[],un:[],tm:null,shown:false,cat:'',round:undefined,cands:[]};
+async function onlInit(){
+ if(DB)return onlHome();
+ $('#spyOnl').innerHTML='<p class="sub">جاري الاتصال...</p>';
+ try{
+  const c=window.claude;
+  if(c){const [d,u]=await Promise.all([c.use('db'),c.use('user')]);DB=d;if(u&&u.id)UID=await u.id()}
+ }catch(e){}
+ if(!DB||!UID){DB=null;$('#spyOnl').innerHTML='<p class="sub">اللعب الأونلاين يشتغل فقط من رابط claude.ai وأنت مسجّل دخول وصلاحيتك "مساهم" في قائمة المشاركة. تقدر تلعب "جوال واحد" بدون هذي الشروط.</p>';return}
+ onlHome();
+}
+function onlHome(){
+ $('#spyOnl').innerHTML='<p class="sub">اكتب اسمك، ثم أنشئ غرفة أو ادخل بكود صاحبك.</p><input type="text" id="oName" placeholder="اسمك" maxlength="14"><div class="row"><button class="btn" onclick="onlCreate()">أنشئ غرفة</button></div><div class="row"><input type="text" id="oCode" placeholder="كود الغرفة" maxlength="4" style="width:130px;text-align:center"><button class="btn g" onclick="onlJoin()">ادخل</button></div><div class="msg" id="oMsg"></div>';
+ $('#oName').value=O.name;
+}
+function onlErr(){popup('⚠️','تعذّر الاتصال','تعذّر الاتصال بالسيرفر. تأكد من الإنترنت وحاول مرة ثانية.')}
+function onlName(){const n=$('#oName').value.trim();if(!n){$('#oMsg').textContent='اكتب اسمك أول.';return false}O.name=n;return true}
+async function onlCreate(){
+ if(!onlName())return;
+ const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let code,ex=true,n=0;
+ try{
+  while(ex&&n++<5){code=Array.from({length:4},()=>A[Math.random()*A.length|0]).join('');ex=(await DB.doc('rooms/'+code).get()).exists}
+  await DB.doc('rooms/'+code).set({host:UID,phase:'lobby',round:0,t:Date.now()});
+  await onlEnter(code);
+ }catch(e){onlErr()}
+}
+async function onlJoin(){
+ if(!onlName())return;
+ const code=$('#oCode').value.trim().toUpperCase();
+ if(code.length!==4){$('#oMsg').textContent='الكود 4 خانات.';return}
+ try{
+  const s=await DB.doc('rooms/'+code).get();
+  if(!s.exists){$('#oMsg').textContent='ما لقيت غرفة بهذا الكود.';return}
+  await onlEnter(code);
+ }catch(e){onlErr()}
+}
+async function onlEnter(code){
+ O.code=code;O.pl=[];O.room=null;O.round=undefined;O.shown=false;
+ await DB.doc(`rooms/${code}/p/${UID}`).set({name:O.name,vote:'',t:Date.now()});
+ O.un.push(DB.doc('rooms/'+code).onSnapshot(s=>{O.room=s.exists?s.data():null;onlDraw()},onlErr));
+ O.un.push(DB.collection(`rooms/${code}/p`).onSnapshot(q=>{O.pl=q.docs.map(d=>({id:d.id,...d.data()}));onlDraw()},onlErr));
+ clearInterval(O.tm);O.tm=setInterval(onlTick,1000);
+}
+function onlLeave(){O.un.forEach(f=>f());O.un=[];clearInterval(O.tm);O.code=null;O.room=null;O.pl=[]}
+async function onlExit(){try{await DB.doc(`rooms/${O.code}/p/${UID}`).delete()}catch(e){}onlLeave();onlHome()}
+function onlTick(){
+ const e=$('#oTm');if(!e||!O.room||O.room.phase!=='play')return;
+ const t=Math.max(0,300-((Date.now()-O.room.startAt)/1000|0));
+ e.textContent=String(t/60|0).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+}
+function onlDraw(){
+ const R=O.room,box=$('#spyOnl');if(!O.code)return;
+ if(!R){box.innerHTML='<p class="sub">الغرفة غير موجودة.</p><div class="row"><button class="btn" onclick="onlExit()">رجوع</button></div>';return}
+ const host=R.host===UID,pl=[...O.pl].sort((a,b)=>a.t-b.t),nm=id=>esc((pl.find(p=>p.id===id)||{}).name||'؟'),ids=R.ids||[];
+ if(O.round!==R.round){O.round=R.round;O.shown=false;if(R.phase==='play')DB.doc(`rooms/${O.code}/p/${UID}`).update({vote:''}).catch(()=>{})}
+ const me=pl.find(p=>p.id===UID)||{};
+ let h=`<div class="sub">كود الغرفة: <b style="font-size:1.6rem;color:var(--a);letter-spacing:.2em">${O.code}</b><br>${pl.map(p=>`<span class="chip">${esc(p.name)}${p.id===R.host?' 👑':''}</span>`).join('')}</div>`;
+ if(R.phase==='lobby'){
+  h+=host?`<div class="row"><select onchange="O.cat=this.value"><option value="">تصنيف عشوائي</option>${Object.keys(CATS).map(k=>`<option ${O.cat===k?'selected':''}>${k}</option>`).join('')}</select></div><div class="row"><button class="btn" ${pl.length<3?'disabled':''} onclick="onlStart()">ابدأ الجولة</button></div><p class="sub">${pl.length<3?'تحتاجون 3 لاعبين على الأقل. شاركهم الكود.':'جاهزين!'}</p>`:'<p class="sub">ننتظر صاحب الغرفة يبدأ الجولة...</p>';
+ }else if(!ids.includes(UID)){
+  h+='<p class="sub">الجولة بدأت قبل لا تدخل. انتظر الجولة الجاية.</p>';
+ }else if(R.phase==='play'){
+  const spy=R.spy===UID;O.cands=pl.filter(p=>ids.includes(p.id)&&p.id!==UID);
+  const inner=!O.shown?'<div style="font-size:2rem">👆</div><div>اضغط لتشوف دورك، واضغط مرة ثانية لتخبّيه</div>':spy?`<div style="font-size:2rem">🤫</div><div class="big" style="color:var(--c)">أنت برا السالفة</div><div class="sub" style="margin:0">التصنيف: ${esc(R.cat)}</div>`:`<div class="sub" style="margin:0">التصنيف: ${esc(R.cat)}</div><div class="big" style="color:var(--b)">${esc(R.word)}</div>`;
+  h+=`<div class="rev ${O.shown?'shown':''} ${O.shown&&spy?'spy':''}" onclick="O.shown=!O.shown;onlDraw()">${inner}</div><p class="sub">يبدأ بالأسئلة: <b>${nm(R.starter)}</b></p><div class="big neon-t" id="oTm"></div><p class="sub">صوّت على اللي تشك فيه:</p><div class="row">${O.cands.map((p,i)=>`<button class="btn ${me.vote===p.id?'':'g'}" onclick="onlVote(${i})">${esc(p.name)}</button>`).join('')}</div>`+(host?'<div class="row"><button class="btn" onclick="onlReveal()">اكشف برا السالفة</button></div>':'');
+ }else{
+  h+=`<h2>برا السالفة: <span style="color:var(--c)">${nm(R.spy)}</span></h2><p class="sub">الكلمة: <b style="color:var(--b);font-size:1.3rem">${esc(R.word)}</b></p><p class="sub">الأصوات:<br>${pl.filter(p=>ids.includes(p.id)).map(p=>`${esc(p.name)} ← ${p.vote?nm(p.vote):'ما صوّت'}`).join('<br>')}</p>`+(host?'<div class="row"><button class="btn" onclick="onlNew()">جولة جديدة</button></div>':'');
+ }
+ h+='<div class="row"><button class="btn g" onclick="onlExit()">خروج</button></div>';
+ box.innerHTML=h;onlTick();
+}
+async function onlStart(){
+ const ids=O.pl.map(p=>p.id);if(ids.length<3)return;
+ const c=O.cat||pick(Object.keys(CATS));
+ try{await DB.doc('rooms/'+O.code).update({phase:'play',round:(O.room.round||0)+1,cat:c,word:pick(CATS[c]),spy:pick(ids),ids,starter:pick(ids),startAt:Date.now()})}catch(e){onlErr()}
+}
+async function onlReveal(){try{await DB.doc('rooms/'+O.code).update({phase:'reveal'})}catch(e){onlErr()}}
+async function onlNew(){try{await DB.doc('rooms/'+O.code).update({phase:'lobby'})}catch(e){onlErr()}}
+async function onlVote(i){const p=O.cands[i];if(!p)return;try{await DB.doc(`rooms/${O.code}/p/${UID}`).update({vote:p.id})}catch(e){onlErr()}}
+
+/* ===== 2) الروابط ===== */
+const DATA=[
+ {t:"مدن وألعاب",w:["طوكيو","أرض","كورة","مسرحية"],c:"#ffc24b"},
+ {t:"المجموعة الثانية",w:["ملف","شريط","جسر","إطار"],c:"#3fd9b5"},
+ {t:"المجموعة الثالثة",w:["حشرة","خط","ربيع","شكل"],c:"#7aa2ff"},
+ {t:"المجموعة الرابعة",w:["مخطط","مصرف","مشتري","تفاح"],c:"#ff6f91"}
+];
+let words,sel,solved,lives,over;
+function cInit(){
+ words=shuf(DATA.flatMap(g=>g.w));sel=[];solved=[];lives=4;over=false;$('#cMsg').textContent='';cDraw();
+}
+function cDraw(){
+ $('#lives').innerHTML=[0,1,2,3].map(i=>`<i class="dot ${i>=lives?'off':''}"></i>`).join('');
+ $('#solved').innerHTML=solved.map(g=>`<div class="done" style="background:${g.c}"><b>${g.t}</b><span>${g.w.join(' • ')}</span></div>`).join('');
+ const g=$('#grid');g.innerHTML='';
+ words.filter(w=>!solved.some(s=>s.w.includes(w))).forEach(w=>{
+  const d=document.createElement('div');d.className='card'+(sel.includes(w)?' sel':'');d.textContent=w;
+  d.onclick=()=>{if(over)return;const i=sel.indexOf(w);if(i>-1)sel.splice(i,1);else if(sel.length<4)sel.push(w);$('#cMsg').textContent='';cDraw()};
+  g.appendChild(d);
+ });
+ $('#cGo').disabled=sel.length!==4||over;
+}
+function cShuffle(){words=shuf(words);cDraw()}
+function cClear(){sel=[];cDraw()}
+function cSubmit(){
+ if(sel.length!==4||over)return;
+ const hit=DATA.find(g=>g.w.every(w=>sel.includes(w)));
+ if(hit){
+  solved.push(hit);sel=[];cDraw();
+  if(solved.length===4){over=true;setTimeout(()=>popup('🎉','فزت!',`جمّعت كل المجموعات وباقي لك ${lives} محاولات.`,cInit),500)}
+  return;
+ }
+ const close=DATA.some(g=>g.w.filter(w=>sel.includes(w)).length===3);
+ lives--;$('#cMsg').textContent=close?'قريب! كلمة وحدة خطأ.':'مو صحيح، حاول مرة ثانية.';
+ $$('.card.sel').forEach(c=>c.classList.add('shake'));
+ $('#lives').innerHTML=[0,1,2,3].map(i=>`<i class="dot ${i>=lives?'off':''}"></i>`).join('');
+ if(lives<=0){
+  over=true;DATA.forEach(g=>{if(!solved.includes(g))solved.push(g)});sel=[];
+  setTimeout(()=>{cDraw();popup('😵','خسرت','انتهت المحاولات. هذي كل المجموعات.',cInit)},500);
+ }else $('#cGo').disabled=false;
+}
+cInit();
+
+/* ===== سباق أسرع كاتب أونلاين ===== */
+let R2={code:null,room:null,pl:[],un:[],tm:null,ph:'',i:0,sc:0,cur:null,over:false,t0:0,startAt:0,go:false};
+$$('#tySw button').forEach(b=>b.onclick=()=>{
+ $$('#tySw button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+ const m=b.dataset.s,o=m==='onl';$('#raceOnl').style.display=o?'block':'none';$('#raceCod').style.display=m==='cod'?'block':'none';
+ if(m!=='loc'){tyStop();$('#tyMenu').style.display='none';if(o&&!R2.code)raceInit();if(m==='cod')rcHome()}else if(!T.on){$('#tyMenu').style.display='block'}
+});
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function rWord(seed,i){
+ const r=rng(seed+i*7919),w=WORDS[r()*WORDS.length|0],scr=r()<.5;let sh=w;
+ if(scr){let a=[...w],k=0;do{for(let j=a.length-1;j>0;j--){const x=r()*(j+1)|0;[a[j],a[x]]=[a[x],a[j]]}k++}while(a.join('')===w&&k<9);sh=a.join(' ')}
+ return{w,scr,sh};
+}
+async function raceInit(){
+ const box=$('#raceOnl');box.innerHTML='<p class="sub">جاري الاتصال...</p>';
+ if(!DB||!UID){try{const c=window.claude;if(c){const [d,u]=await Promise.all([c.use('db'),c.use('user')]);DB=d;if(u&&u.id)UID=await u.id()}}catch(e){}}
+ if(!DB||!UID){DB=null;box.innerHTML='<p class="sub">السباق الأونلاين يشتغل فقط من رابط claude.ai وأنت مسجّل دخول وصلاحيتك "مساهم" في قائمة المشاركة. تقدر تلعب "فردي" بدون هذي الشروط.</p>';return}
+ raceHome();
+}
+function raceHome(){
+ $('#raceOnl').innerHTML='<p class="sub">اكتب اسمك، ثم أنشئ سباق أو ادخل بكود صاحبك.</p><input type="text" id="rName" placeholder="اسمك" maxlength="14"><div class="row"><button class="btn" onclick="raceCreate()">أنشئ سباق</button></div><div class="row"><input type="text" id="rCode" placeholder="كود السباق" maxlength="4" style="width:130px;text-align:center"><button class="btn g" onclick="raceJoin()">ادخل</button></div><div class="msg" id="rMsg"></div>';
+ $('#rName').value=O.name;
+}
+function raceName(){const n=$('#rName').value.trim();if(!n){$('#rMsg').textContent='اكتب اسمك أول.';return false}O.name=n;return true}
+async function raceCreate(){
+ if(!raceName())return;
+ const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let code,ex=true,n=0;
+ try{
+  while(ex&&n++<5){code=Array.from({length:4},()=>A[Math.random()*A.length|0]).join('');ex=(await DB.doc('races/'+code).get()).exists}
+  await DB.doc('races/'+code).set({host:UID,phase:'lobby',t:Date.now()});
+  await raceEnter(code);
+ }catch(e){onlErr()}
+}
+async function raceJoin(){
+ if(!raceName())return;
+ const code=$('#rCode').value.trim().toUpperCase();
+ if(code.length!==4){$('#rMsg').textContent='الكود 4 خانات.';return}
+ try{
+  const s=await DB.doc('races/'+code).get();
+  if(!s.exists){$('#rMsg').textContent='ما لقيت سباق بهذا الكود.';return}
+  await raceEnter(code);
+ }catch(e){onlErr()}
+}
+async function raceEnter(code){
+ R2.code=code;R2.room=null;R2.pl=[];R2.ph='';
+ await DB.doc(`races/${code}/p/${UID}`).set({name:O.name,score:0,t:Date.now()});
+ R2.un.push(DB.doc('races/'+code).onSnapshot(s=>{R2.room=s.exists?s.data():null;raceDraw()},onlErr));
+ R2.un.push(DB.collection(`races/${code}/p`).onSnapshot(q=>{R2.pl=q.docs.map(d=>({id:d.id,...d.data()}));raceDraw()},onlErr));
+ clearInterval(R2.tm);R2.tm=setInterval(raceTick,250);
+}
+async function raceExit(){
+ try{await DB.doc(`races/${R2.code}/p/${UID}`).delete()}catch(e){}
+ R2.un.forEach(f=>f());R2.un=[];clearInterval(R2.tm);R2.code=null;R2.room=null;R2.pl=[];R2.ph='';raceHome();
+}
+function raceBoard(){
+ const el=$('#rBoard');if(!el)return;
+ const pl=[...R2.pl].sort((a,b)=>(b.score||0)-(a.score||0)||a.t-b.t),mx=Math.max(1,...pl.map(p=>p.score||0)),ic=['🥇','🥈','🥉'];
+ el.innerHTML=pl.map((p,k)=>`<div class="rb ${p.id===UID?'me':''}"><span class="n">${R2.over&&k<3?ic[k]+' ':''}${esc(p.name)}</span><span class="tr"><i style="width:${(p.score||0)/mx*100}%"></i></span><span class="s">${p.score||0}</span></div>`).join('');
+}
+function raceDraw(){
+ const R=R2.room,box=$('#raceOnl');if(!R2.code)return;
+ if(!R){box.innerHTML='<p class="sub">السباق غير موجود.</p><div class="row"><button class="btn" onclick="raceExit()">رجوع</button></div>';R2.ph='';return}
+ const host=R.host===UID;
+ if(R.phase==='lobby'){
+  R2.ph='lobby';
+  box.innerHTML=`<div class="sub">كود السباق: <b style="font-size:1.6rem;color:var(--a);letter-spacing:.2em">${R2.code}</b><br>${R2.pl.map(p=>`<span class="chip">${esc(p.name)}${p.id===R.host?' 👑':''}</span>`).join('')}</div>`+(host?`<div class="row"><button class="btn" ${R2.pl.length<2?'disabled':''} onclick="raceStart()">ابدأ السباق</button></div><p class="sub">${R2.pl.length<2?'تحتاجون لاعبين على الأقل. شاركهم الكود.':'60 ثانية، وكل اللاعبين يجيهم نفس الكلمات بنفس الترتيب.'}</p>`:'<p class="sub">ننتظر صاحب السباق يبدأ...</p>')+'<div class="row"><button class="btn g" onclick="raceExit()">خروج</button></div>';
+  return;
+ }
+ if(R2.ph!=='play'||R2.startAt!==R.startAt){R2.ph='play';R2.startAt=R.startAt;raceBuild()}
+ raceBoard();
+}
+function raceBuild(){
+ R2.i=0;R2.sc=0;R2.over=false;R2.go=false;R2.cur=null;
+ DB.doc(`races/${R2.code}/p/${UID}`).update({score:0}).catch(()=>{});
+ $('#raceOnl').innerHTML='<div class="hud"><span class="neon-t">⏱ <span id="rT">60</span></span><span class="neon-s">نقاطك: <span id="rS">0</span></span></div><div class="bar"><i id="rBar"></i></div><div class="mode" id="rMode">استعد...</div><div class="word" id="rWord"></div><input type="text" id="rIn" autocomplete="off" placeholder="اكتب ثم Enter" disabled><div id="rBoard" style="margin-top:16px"></div><div class="row" id="rNew"></div>';
+ $('#rIn').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||!R2.go||R2.over||!R2.cur)return;
+  const i=e.target;
+  if(i.value.trim()===R2.cur.w){
+   R2.sc+=R2.cur.w.length*2+(R2.cur.scr?5:0)+Math.max(0,5-(Date.now()-R2.t0)/1000|0)*2;R2.i++;
+   $('#rS').textContent=R2.sc;DB.doc(`races/${R2.code}/p/${UID}`).update({score:R2.sc}).catch(()=>{});
+   i.className='ok';setTimeout(raceWord,200);
+  }else{i.className='';void i.offsetWidth;i.className='no'}
+ });
+}
+function raceWord(){
+ if(R2.over)return;
+ R2.cur=rWord(R2.room.seed,R2.i);
+ $('#rWord').textContent=R2.cur.sh;$('#rMode').textContent=R2.cur.scr?'رتّب الأحرف واكتب الكلمة':'اكتب الكلمة كما هي';
+ const i=$('#rIn');i.value='';i.className='';i.focus();R2.t0=Date.now();
+}
+function raceTick(){
+ if(R2.ph!=='play'||!R2.room||!$('#rIn'))return;
+ const now=Date.now(),st=R2.room.startAt,left=st+60000-now;
+ if(now<st){$('#rWord').textContent=Math.ceil((st-now)/1000);return}
+ if(!R2.go&&!R2.over){R2.go=true;$('#rIn').disabled=false;raceWord()}
+ if(left<=0){
+  if(!R2.over){
+   R2.over=true;R2.go=false;$('#rIn').disabled=true;$('#rT').textContent=0;$('#rBar').style.width='0%';
+   $('#rWord').textContent='انتهى الوقت!';$('#rMode').textContent='نتيجتك: '+R2.sc;
+   DB.doc(`races/${R2.code}/p/${UID}`).update({score:R2.sc}).catch(()=>{});
+   $('#rNew').innerHTML=(R2.room.host===UID?'<button class="btn" onclick="raceNew()">سباق جديد</button>':'')+'<button class="btn g" onclick="raceExit()">خروج</button>';
+   raceBoard();
+  }
+  return;
+ }
+ $('#rT').textContent=Math.ceil(left/1000);$('#rBar').style.width=(left/600)+'%';
+}
+async function raceStart(){
+ try{await DB.doc('races/'+R2.code).update({phase:'play',seed:Math.random()*1e9|0,startAt:Date.now()+4000})}catch(e){onlErr()}
+}
+async function raceNew(){try{await DB.doc('races/'+R2.code).update({phase:'lobby'})}catch(e){onlErr()}}
+
+/* ===== وضع الكود (بدون حساب): الكود نفسه يحدد كل شي ===== */
+const CK=Object.keys(CATS);let cn=4,CV=null,cShown=false;
+function codN(d){cn=Math.min(12,Math.max(3,cn+d));$('#cnTxt').textContent=cn}
+function codInfo(code,N){
+ code=code.trim().toUpperCase();const ci='ABCDE'.indexOf(code[0]),d=parseInt(code.slice(1),10);
+ if(ci<0||code.length!==4||isNaN(d))return null;
+ const r=rng(d*31+N*1000003+ci),c=CK[ci];
+ return{cat:c,spy:(r()*N|0)+1,word:CATS[c][r()*CATS[c].length|0],st:(r()*N|0)+1};
+}
+function codHome(){
+ $('#spyCod').innerHTML=`<p class="sub">ما يحتاج حساب ولا اتصال بينكم. واحد منكم ينشئ كود، وكل لاعب يدخل الكود وعدد اللاعبين ورقمه (1، 2، 3...) ويشوف دوره على جواله.</p>
+ <div class="stepper"><button onclick="codN(-1)">−</button><div><div class="big" id="cnTxt">${cn}</div><div class="sub" style="margin:0">عدد اللاعبين</div></div><button onclick="codN(1)">+</button></div>
+ <div class="row"><select id="cCat"><option value="">تصنيف عشوائي</option>${CK.map(k=>`<option>${k}</option>`).join('')}</select><button class="btn" onclick="codMake()">أنشئ كود</button></div><div id="cMade"></div>
+ <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+ <p class="sub">أنت لاعب؟ اكتب الكود، وعدد اللاعبين، ورقمك:</p>
+ <div class="row"><input type="text" id="cIn" placeholder="الكود" maxlength="4" style="width:90px;text-align:center"><input type="text" id="cN" inputmode="numeric" placeholder="العدد" maxlength="2" style="width:80px;text-align:center"><input type="text" id="cSeat" inputmode="numeric" placeholder="رقمك" maxlength="2" style="width:80px;text-align:center"></div>
+ <div class="row"><button class="btn g" onclick="codSee()">شوف دوري</button></div><div class="msg" id="cMsg2"></div><div id="cView"></div>`;
+}
+function codMake(){
+ const s=$('#cCat').value,ci=s?CK.indexOf(s):Math.random()*CK.length|0;
+ const code='ABCDE'[ci]+(100+Math.random()*900|0);
+ $('#cMade').innerHTML=`<p class="sub" style="margin-top:12px">الكود: <b style="font-size:1.6rem;color:var(--a);letter-spacing:.2em">${code}</b><br>عدد اللاعبين: <b>${cn}</b><br>أعطِ كل لاعب الكود، وعدد اللاعبين، ورقماً مختلفاً من 1 إلى ${cn}.</p>`;
+}
+function codSee(){
+ const N=parseInt($('#cN').value,10),seat=parseInt($('#cSeat').value,10),m=$('#cMsg2');
+ if(!(N>=3&&N<=12)){m.textContent='عدد اللاعبين من 3 إلى 12.';return}
+ if(!(seat>=1&&seat<=N)){m.textContent='رقمك لازم يكون من 1 إلى '+N+'.';return}
+ const i=codInfo($('#cIn').value,N);if(!i){m.textContent='الكود غير صحيح.';return}
+ m.textContent='';CV={...i,seat};cShown=false;codCard();
+}
+function codCard(){
+ const spy=CV.spy===CV.seat;
+ const inner=!cShown?'<div style="font-size:2rem">👆</div><div>اضغط لتشوف دورك، واضغط مرة ثانية لتخبّيه</div>':spy?`<div style="font-size:2rem">🤫</div><div class="big" style="color:var(--c)">أنت برا السالفة</div><div class="sub" style="margin:0">التصنيف: ${CV.cat}</div>`:`<div class="sub" style="margin:0">التصنيف: ${CV.cat}</div><div class="big" style="color:var(--b)">${CV.word}</div>`;
+ $('#cView').innerHTML=`<div class="rev ${cShown?'shown':''} ${cShown&&spy?'spy':''}" onclick="cShown=!cShown;codCard()">${inner}</div><p class="sub">يبدأ بالأسئلة: اللاعب رقم <b>${CV.st}</b></p><div class="row"><button class="btn g" onclick="codReveal()">اكشف النتيجة (بعد التصويت)</button></div><div id="cRev"></div>`;
+}
+function codReveal(){$('#cRev').innerHTML=`<p class="sub">برا السالفة: اللاعب رقم <b style="color:var(--c)">${CV.spy}</b><br>الكلمة: <b style="color:var(--b)">${CV.word}</b></p>`}
+
+/* سباق بالكود: نفس الكود = نفس الكلمات لكل اللاعبين */
+let RC={};
+function rcHome(){
+ clearInterval(RC.tm);
+ $('#raceCod').innerHTML='<p class="sub">ما يحتاج حساب. كل اللاعبين يدخلون نفس الكود، فتجيهم نفس الكلمات بنفس الترتيب لمدة 60 ثانية، وبعدها تقارنون نتايجكم.</p><div class="row"><input type="text" id="rcIn" placeholder="الكود" maxlength="8" style="width:120px;text-align:center"><button class="btn" onclick="rcGo()">ابدأ</button><button class="btn g" onclick="$(\'#rcIn\').value=String(1000+Math.random()*9000|0)">كود عشوائي</button></div><div class="msg" id="rcMsg"></div>';
+}
+function rcGo(){
+ const c=$('#rcIn').value.trim();if(!c){$('#rcMsg').textContent='اكتب كود أو اضغط "كود عشوائي" وشاركه مع أصحابك.';return}
+ let h=7;for(const ch of c.toUpperCase())h=(h*131+ch.charCodeAt(0))%1000000007;
+ RC={seed:h,code:c,i:0,sc:0,go:false,over:false,cur:null,t0:0,st:Date.now()+3000};
+ $('#raceCod').innerHTML='<div class="hud"><span class="neon-t">⏱ <span id="cwT">60</span></span><span class="neon-s">نقاطك: <span id="cwS">0</span></span></div><div class="bar"><i id="cwBar"></i></div><div class="mode" id="cwMode">استعد...</div><div class="word" id="cwWord"></div><input type="text" id="cwIn" autocomplete="off" placeholder="اكتب ثم Enter" disabled><div class="row" id="cwEnd"></div>';
+ $('#cwIn').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||!RC.go||RC.over)return;const i=e.target;
+  if(i.value.trim()===RC.cur.w){
+   RC.sc+=RC.cur.w.length*2+(RC.cur.scr?5:0)+Math.max(0,5-(Date.now()-RC.t0)/1000|0)*2;RC.i++;
+   $('#cwS').textContent=RC.sc;i.className='ok';setTimeout(rcWord,200);
+  }else{i.className='';void i.offsetWidth;i.className='no'}
+ });
+ RC.tm=setInterval(rcTick,250);
+}
+function rcWord(){
+ if(RC.over)return;RC.cur=rWord(RC.seed,RC.i);
+ $('#cwWord').textContent=RC.cur.sh;$('#cwMode').textContent=RC.cur.scr?'رتّب الأحرف واكتب الكلمة':'اكتب الكلمة كما هي';
+ const i=$('#cwIn');i.value='';i.className='';i.focus();RC.t0=Date.now();
+}
+function rcTick(){
+ if(!$('#cwIn')){clearInterval(RC.tm);return}
+ const now=Date.now(),left=RC.st+60000-now;
+ if(now<RC.st){$('#cwWord').textContent=Math.ceil((RC.st-now)/1000);return}
+ if(!RC.go&&!RC.over){RC.go=true;$('#cwIn').disabled=false;rcWord()}
+ if(left<=0){
+  clearInterval(RC.tm);RC.over=true;RC.go=false;$('#cwIn').disabled=true;$('#cwT').textContent=0;$('#cwBar').style.width='0%';
+  $('#cwWord').textContent='انتهى الوقت!';$('#cwMode').textContent='نتيجتك: '+RC.sc+' (الكود '+esc(RC.code)+')';
+  $('#cwEnd').innerHTML='<button class="btn" onclick="rcHome()">سباق جديد</button>';
+  return;
+ }
+ $('#cwT').textContent=Math.ceil(left/1000);$('#cwBar').style.width=(left/600)+'%';
+}
+
+/* ===== 3) أسرع كاتب ===== */
+const WORDS=["مكتبة","سيارة","مدينة","صحراء","طائرة","حديقة","مدرسة","شمسية","كمبيوتر","برتقال","نافذة","مفتاح","جامعة","سحابة","قهوة","ساعة","كتاب","صقر","نخلة","بحيرة","جبل","مطر","لعبة","حاسوب","هاتف","شجرة","مستشفى","طريق","نجمة","عصفور","ثلاجة","مطبخ","مسافر","سفينة","ملعب","ضيافة","تفاحة","وردة","قمر","رمال"];
+let mode='mix',T={on:false};
+$$('#modes button').forEach(b=>b.onclick=()=>{$$('#modes button').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m});
+let best=0;$('#best').textContent=best;
+function tyStart(){
+ T={on:true,t:60,max:60,s:0,w:'',m:'type',t0:0};
+ $('#tyMenu').style.display='none';$('#tyGame').style.display='block';$('#tyS').textContent=0;
+ tyNext();clearInterval(T.i);T.i=setInterval(()=>{T.t--;if(T.t<=0){tyEnd();return}tyHud()},1000);
+}
+function tyHud(){$('#tyT').textContent=Math.max(0,T.t);$('#tyBar').style.width=Math.min(100,T.t/T.max*100)+'%'}
+function tyNext(skip){
+ if(skip===true){T.t-=2;if(T.t<=0){tyEnd();return}}
+ let w;do{w=pick(WORDS)}while(w===T.w);T.w=w;
+ T.m=mode==='mix'?pick(['type','scr']):mode;
+ let show=w;
+ if(T.m==='scr'){let x;do{x=shuf([...w]).join(' ')}while(x.replace(/ /g,'')===w);show=x}
+ $('#tyWord').textContent=show;$('#tyMode').textContent=T.m==='scr'?'رتّب الأحرف واكتب الكلمة':'اكتب الكلمة كما هي';
+ const i=$('#tyIn');i.value='';i.className='';i.focus();T.t0=Date.now();tyHud();
+}
+$('#tyIn').addEventListener('keydown',e=>{
+ if(e.key!=='Enter'||!T.on)return;
+ const v=e.target.value.trim(),i=e.target;
+ if(v===T.w){
+  const fast=Math.max(0,5-(Date.now()-T.t0)/1000)|0;
+  T.s+=T.w.length*2+fast*2+(T.m==='scr'?5:0);T.t=Math.min(T.max+10,T.t+3);
+  $('#tyS').textContent=T.s;i.className='ok';setTimeout(tyNext,220);
+ }else{i.className='';void i.offsetWidth;i.className='no'}
+});
+function tyStop(){if(T.on){clearInterval(T.i);T.on=false;$('#tyGame').style.display='none';$('#tyMenu').style.display='block'}}
+function tyEnd(){
+ clearInterval(T.i);T.on=false;const s=T.s,nb=s>best;if(nb){best=s;$('#best').textContent=best}
+ popup(nb&&s>0?'🏆':'⏰','انتهى الوقت',`نقاطك: <b>${s}</b>${nb&&s>0?'<br>رقم قياسي جديد!':''}`,()=>{$('#tyGame').style.display='none';$('#tyMenu').style.display='block'});
+}
+</script>
+</body>
+</html>
